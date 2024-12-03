@@ -2,6 +2,7 @@
 
 // Declare function pointer array with 1 function (beep)
 void (*function_array[1])(char[]) = {beep};
+uint16 funcs = sizeof(function_array)/sizeof(function_array[0]);
 
 void setup() {
   Wire.begin(0x01);  // Set up I2C address
@@ -27,7 +28,7 @@ void receiveEvent(int bytes) {
   }
 
   // Ensure func is within bounds (0 in this case)
-  if (func < 1) {
+  if (func < funcs) {
     function_array[func](out);  // Call the function based on func index
   }
 }
