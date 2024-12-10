@@ -9,12 +9,11 @@ void setup() {
 }
 
 void loop() {
-  
-  send_FCP(0x01, 0x00, args1, sizeof(args1));
   delay(3000);
-  send_FCP(0x01, 0x00, args0, sizeof(args0));
-  delay(3000);
-
+  uint8_t arr[30];
+  request_FCP(0x01, 0x01, args0, 1, arr);
+  Serial.print("output: ");
+  Serial.println(arr[0]);
 }
 
 int instuc_FCP(uint8_t address, uint16_t function, const uint8_t* args, uint8_t length) {
