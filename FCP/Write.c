@@ -17,7 +17,7 @@ void loop() {
 
 }
 
-int send_FCP(uint8_t address, uint16_t function, const uint8_t* args, uint8_t length) {
+int instuc_FCP(uint8_t address, uint16_t function, const uint8_t* args, uint8_t length) {
   if (length >= 29) {
     return -1;  // Error: args too long
   }
@@ -39,5 +39,48 @@ int send_FCP(uint8_t address, uint16_t function, const uint8_t* args, uint8_t le
   }
 
   Wire.endTransmission();
+  return 0;  // Success
+}
+
+int request_FCP(uint8_t address, uint16_t function, const uint8_t* args, uint8_t length, uint8_t* out) {
+  if (length >= 29) {
+    return -1;  // Error: args too long
+  }
+
+  Wire.beginTransmission(address);
+
+  // Write function ID as two bytes
+  Wire.write(function & 0xFF);        // Low byte
+  Wire.write((function >> 8) & 0xFF); // High byte
+  Serial.print("Function: ");
+  Serial.println(function);
+
+  // Write each byte from the args array
+  for (uint8_t i = 0; i < length; i++) {
+    Wire.write(args[i]);
+    Serial.print("Arg ");
+    Serial.print(i);
+    Serial.print(": ");
+    Serial.println(args[i]);
+  }
+
+  // Check for transmission errors
+  if (Wire.endTransmission() != 0) {
+    Serial.println("Transmission Error!");
+    return -2;
+  }
+
+  // Request data from the slave
+  Wire.requestFrom(address, 30);
+  
+  // Read the requested data into the output buffer
+  for (uint8_t k = 0; k < 30 && Wire.available(); k++) {
+    out[k] = Wire.read();
+    Serial.print("Received ");
+    Serial.print(k);
+    Serial.print(": ");
+    Serial.println(out[k]);
+}
+
   return 0;  // Success
 }
