@@ -183,6 +183,28 @@ int block_aloc(){
   }
   return-1;
 }
+int aloc_rand_block() {
+  int ra;
+  for (int i = 0; i < 5; i++) {
+    ra = rand() % (n_bloks + 1);  // Get a random block
+    
+    if (fat[ra] == -1) {  // Check if it's free
+      fat[ra] = -3;  // Mark the block as allocated
+      return ra;  // Return the random block
+    }
+  }
+
+  // If the random search didn't work, check every block
+  for (int i = 0; i < n_bloks; i++) {
+    if (fat[i] == -1) {
+      fat[i] = -3;  // Mark the block as allocated
+      return i;  // Return the block
+    }
+  }
+
+  return -1;  // No free block found
+}
+
 
 int block_free(int id){
   if (id < n_bloks){
@@ -267,5 +289,3 @@ void delet_file(int id){
   }
 
 }
-
-
