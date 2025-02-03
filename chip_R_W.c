@@ -40,26 +40,30 @@ void loop() {
   // Empty loop
 }
 
-void writeRecursively(uint16_t memaddr,uint16_t* arr,int len){
-  if (len==0){
-    return;
-  }
-  int pageofset = len % 128;
-  int bytestowrite = min(128-pageofset,len*2)
+void write_page(uint8_t eeprom_addr, uint16_t memAddr, int8_t* arr, int len) {
+  while (len > 0) {
+    int bytesToWrite = min(128 - (memAddr % 128), len);  // Don't cross page boundary
 
+    while (bytesToWrite > 0) {
+      int chunkSize = min(30, bytesToWrite);  // Max chunk size due to Wire buffer limit
 
-  Wire.beginTransmission(EEPROM_ADDRESS);
-  // Send the memory address (two bytes: high byte and low byte)
-  Wire.write((memAddr >> 8) & 0xFF);  // High byte
-  Wire.write(memAddr & 0xFF);         // low byte
-  int len=sizeof(arr)/sizeof(arr[0])
-  for (i=0,i<len,i++){
-    // Send the number (two bytes: high byte and low byte)
-    Wire.write((arr[i] >> 8) & 0xFF);   // High byte
-    Wire.write(arr[i] & 0xFF);          // Low byte
+      Wire.beginTransmission(eeprom_addr);
+      Wire.write((memAddr >> 8) & 0xFF);
+      Wire.write(memAddr & 0xFF);
+
+      for (int i = 0; i < chunkSize; i++) {
+        Wire.write(arr[i]);
+      }
+
+      Wire.endTransmission();
+      delay(10);  // Allow EEPROM write cycle
+
+      memAddr += chunkSize;
+      arr += chunkSize;
+      len -= chunkSize;
+      bytesToWrite -= chunkSize;
+    }
   }
-  Wire.endTransmission();
-  delay(10);
 }
 
 void writeNumberToEEPROM(uint16_t memAddr, uint16_t number) {
@@ -98,8 +102,8 @@ uint16_t readNumberFromEEPROM(uint16_t memAddr) {
   return number;
 }
 
-void readSequential(uint16_t startAddr, uint16_t* out, int len) {
-  Wire.beginTransmission(EEPROM_ADDRESS);
+void readSequential(uint8_t eeprom_addr,uint16_t startAddr, int8_t* out, int len) {
+  Wire.beginTransmission(eeprom_addr);
 
   // Send the start memory address (two bytes: high byte and low byte)
   Wire.write((startAddr >> 8) & 0xFF);  // High byte
@@ -107,15 +111,21 @@ void readSequential(uint16_t startAddr, uint16_t* out, int len) {
 
   Wire.endTransmission();
 
-  // Request the number of bytes to read (2 bytes per uint16_t)
-  Wire.requestFrom(EEPROM_ADDRESS, len * 2);
+  delay(5);
+  // Request the number of bytes to read (1 bytes per uint8_t)
 
-  for (int i = 0; i < len; i++) {
-    if (Wire.available() >= 2) {  // Ensure 2 bytes are available
-      uint16_t number = (Wire.read() << 8);  // Read high byte
-      number |= Wire.read();                 // Read low byte
-      out[i] = number;
+  while (len > 0) {
+    int chunkSize=min(32,len);
+
+    Wire.requestFrom(eeprom_addr, chunkSize);
+
+    for (int i = 0; i < chunkSize; i++) {
+      if (Wire.available()>=1) {  // Ensure byte are available
+        *out = Wire.read();  // Read byte
+        out++; //move to next byte in out buffer
+      }
     }
+    len-=chunkSize;
   }
+  
 }
-
