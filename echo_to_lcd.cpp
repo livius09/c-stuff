@@ -102,10 +102,17 @@ void comand_lcd(uint8_t cmd){
   delay(2);
 }
 void arr_dat(uint8_t* arr,uint8_t len){
-  if (len>32) {
+  if (len>33) {
     Serial.println("arr is bigger then screen");
+    return;
   }
-  uint8_t tow=min(len,16);
+
+  
+  for(int i=0;i<33;i++){
+    if(arr[i]=="/n")
+
+  }
+  uint8_t tow = min(len,16);
   for(int i=0;i<tow;i++){
     data_lcd(*arr);
     arr++;
