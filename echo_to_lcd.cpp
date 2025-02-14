@@ -107,17 +107,32 @@ void arr_dat(uint8_t* arr,uint8_t len){
     return;
   }
 
-  
-  for(int i=0;i<33;i++){
-    if(arr[i]=="/n")
-
+  uint8 nl=0;
+  for(int i=0;i<len;i++){
+    if(arr[i]=="/n"){
+      nl++;
+    }
   }
-  uint8_t tow = min(len,16);
-  for(int i=0;i<tow;i++){
+  if(nl>1){
+    Serial.println("more then one NL");
+    return;
+  }else if(nl==1){
+    uint8 tonl=0
+    for(int i=0;i<len;i++){
+      if(arr[i]!="/n"){
+       tonl++;
+    }
+    if(tonl>16){
+      Serial.println("the nl is after 16 chars");
+      return;
+    }
+  }
+
+  for(int i=0;i<toln;i++){
     data_lcd(*arr);
     arr++;
   }
-  len-=tow;
+  len-=toln;
   comand_lcd(0xC0);
   for(int i=0;i<len;i++){
     data_lcd(arr[i]);
