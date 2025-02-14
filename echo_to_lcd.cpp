@@ -17,6 +17,8 @@
 char bals[]="Distance:";
 
 void setup() {
+  Serial.begin(9600);
+  Serial.print(bals);
   pinMode(trig, OUTPUT);
   pinMode(echo, INPUT);
   delay(50);
@@ -107,9 +109,9 @@ void arr_dat(uint8_t* arr,uint8_t len){
     return;
   }
 
-  uint8 nl=0;
+  uint8_t nl=0;
   for(int i=0;i<len;i++){
-    if(arr[i]=="/n"){
+    if(arr[i]=='\n'){
       nl++;
     }
   }
@@ -117,27 +119,28 @@ void arr_dat(uint8_t* arr,uint8_t len){
     Serial.println("more then one NL");
     return;
   }else if(nl==1){
-    uint8 tonl=0
-    for(int i=0;i<len;i++){
-      if(arr[i]!="/n"){
+    uint8_t tonl=0;
+    for(int k=0;k<len;k++){
+      if(arr[k]!='\n'){
        tonl++;
+      }
     }
     if(tonl>16){
       Serial.println("the nl is after 16 chars");
       return;
     }
 
-    for(int i=0;i<toln;i++){
-    data_lcd(*arr);
-    arr++;
+    for(int d=0;d<tonl;d++){
+      data_lcd(*arr);
+      arr++;
     }
-    len-=toln;
+    len-=tonl;
     comand_lcd(0xC0);
     for(int i=0;i<len;i++){
       data_lcd(arr[i]);
     }
   }else if(nl==0){
-    uint8 tow=min(len,16);
+    uint8_t tow=min(len,16);
     for(int i=0;i<tow;i++){
       data_lcd(*arr);
       arr++;
@@ -147,6 +150,7 @@ void arr_dat(uint8_t* arr,uint8_t len){
     for(int i=0;i<len;i++){
       data_lcd(arr[i]);
     }
+  }
   comand_lcd(0x02);
 }
 
