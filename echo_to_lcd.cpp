@@ -126,17 +126,27 @@ void arr_dat(uint8_t* arr,uint8_t len){
       Serial.println("the nl is after 16 chars");
       return;
     }
-  }
 
-  for(int i=0;i<toln;i++){
+    for(int i=0;i<toln;i++){
     data_lcd(*arr);
     arr++;
-  }
-  len-=toln;
-  comand_lcd(0xC0);
-  for(int i=0;i<len;i++){
-    data_lcd(arr[i]);
-  }
+    }
+    len-=toln;
+    comand_lcd(0xC0);
+    for(int i=0;i<len;i++){
+      data_lcd(arr[i]);
+    }
+  }else if(nl==0){
+    uint8 tow=min(len,16);
+    for(int i=0;i<tow;i++){
+      data_lcd(*arr);
+      arr++;
+    }
+    len-=tow;
+    comand_lcd(0xC0);
+    for(int i=0;i<len;i++){
+      data_lcd(arr[i]);
+    }
   comand_lcd(0x02);
 }
 
