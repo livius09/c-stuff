@@ -14,31 +14,23 @@
 
 #define echo 13
 #define trig 12
-char bals[]="Distance:";
+char bals[]="Dist\nance:";
 
 void setup() {
   Serial.begin(9600);
-  Serial.print(bals);
+
   pinMode(trig, OUTPUT);
   pinMode(echo, INPUT);
   delay(50);
   init_lcd();
   
 
-  arr_dat(bals, 9);
+  nl_arr_dat(bals, 10);
   comand_lcd(0xc0);
 }
 
 void loop() {
-  String dstr = String(get_distance());
-  str_lcd(dstr);
-  data_lcd(' ');
-  data_lcd('c');
-  data_lcd('m');
-  data_lcd(' ');
-  data_lcd(' ');
-  data_lcd(' ');
-  comand_lcd(0xC0);
+  
   delay(1000);
   
 }
@@ -103,54 +95,64 @@ void comand_lcd(uint8_t cmd){
 
   delay(2);
 }
-void arr_dat(uint8_t* arr,uint8_t len){
+
+void arr_dat(uint8_t* arr, uint8_t len){
+  for(int i=0;i<len;i++){
+    data_lcd(arr[i]);
+  }
+}
+
+
+
+void nl_arr_dat(uint8_t* arr,uint8_t len){
+  if (arr[len-1]=='\0') len--; //cause of termination char
+
+  if(len==0) return;
   if (len>33) {
     Serial.println("arr is bigger then screen");
     return;
   }
 
   uint8_t nl=0;
+  uint8_t tonl=0;
   for(int i=0;i<len;i++){
     if(arr[i]=='\n'){
       nl++;
+      tonl=i;
     }
   }
+
   if(nl>1){
     Serial.println("more then one NL");
     return;
-  }else if(nl==1){
-    uint8_t tonl=0;
-    for(int k=0;k<len;k++){
-      if(arr[k]!='\n'){
-       tonl++;
-      }
-    }
-    if(tonl>16){
+  }
+
+  if(tonl>16){
       Serial.println("the nl is after 16 chars");
       return;
-    }
-
-    for(int d=0;d<tonl;d++){
-      data_lcd(*arr);
-      arr++;
-    }
-    len-=tonl;
-    comand_lcd(0xC0);
-    for(int i=0;i<len;i++){
-      data_lcd(arr[i]);
-    }
-  }else if(nl==0){
-    uint8_t tow=min(len,16);
-    for(int i=0;i<tow;i++){
-      data_lcd(*arr);
-      arr++;
-    }
-    len-=tow;
-    comand_lcd(0xC0);
-    for(int i=0;i<len;i++){
-      data_lcd(arr[i]);
-    }
   }
+  Serial.print("chars to nl:");
+  Serial.println(tonl);
+
+  
+
+  uint8_t first_line_len = (nl==1) ? (tonl):min(len,16);
+
+  arr_dat(arr,first_line_len);
+
+  
+  
+  len-=(nl==1)?(first_line_len+1):(first_line_len);
+  arr+=(nl==1)?(first_line_len+1):(first_line_len);
+
+  if(len>0){
+    comand_lcd(0xC0); //jump to second line first char
+    arr_dat(arr,len);
+  }else{
+    Serial.println("len is negative");
+  }
+
+
   comand_lcd(0x02);
 }
 
