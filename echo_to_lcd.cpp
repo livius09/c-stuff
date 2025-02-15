@@ -18,19 +18,27 @@ char bals[]="Dist\nance:";
 
 void setup() {
   Serial.begin(9600);
-
+  Serial.print(bals);
   pinMode(trig, OUTPUT);
   pinMode(echo, INPUT);
   delay(50);
   init_lcd();
   
 
-  nl_arr_dat(bals, 10);
+  arr_dat(bals, 9);
   comand_lcd(0xc0);
 }
 
 void loop() {
-  
+  String dstr = String(get_distance());
+  str_lcd(dstr);
+  data_lcd(' ');
+  data_lcd('c');
+  data_lcd('m');
+  data_lcd(' ');
+  data_lcd(' ');
+  data_lcd(' ');
+  comand_lcd(0xC0);
   delay(1000);
   
 }
