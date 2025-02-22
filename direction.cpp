@@ -51,12 +51,12 @@ void detectB(){
 
 uint8_t get_direction(){ //0=right, 1=left, 2= dif to big, so to long of a time between the two of the gates being pased that it would count as movement
   long dif=lastA-lastB;
-  if (abs(dif)>5000){
+  if (abs(dif)>5000 || dif==0){
     return 2;
   }
   if (dif>0) {
-    return 0;
-  }else if(dif<0) {
     return 1;
+  }else if(dif<0) {
+    return 0;
   }
 }
