@@ -200,14 +200,14 @@ uint8_t write_file(uint8_t* data, uint16_t size) {
   uint16_t addr = block * block_size;
   
 
-  writeNumber(addr,size );   // High byte
-  //writeNumber(addr+1,size & 0xFF);        // Low byte
+  writeNumber(addr,(size >> 8) & 0xFF);   // High byte
+  writeNumber(addr+1,size & 0xFF);        // Low byte
   Serial.print("size: ");
   Serial.println(size);
 
-  uint16_t len =min(size,block_size-1);
+  uint16_t len =min(size,block_size-2);
 
-  write_page(addr+1, data, len);
+  write_page(addr+2, data, len);
 
   data+=len;
   size-=len;
@@ -277,8 +277,8 @@ void read_file(int id, uint8_t* data,int size){
   int block=id;
   uint16_t addr = block*block_size;
 
-  uint16_t read_len = readNumber(addr);  // Read high byte
-  //read_len |= readNumber(addr+1);    // Read low byte
+  uint16_t read_len = (readNumber(addr)<< 8);  // Read high byte
+  read_len |= readNumber(addr+1);    // Read low byte
   Serial.print("read_len: ");
   Serial.println(read_len);
 
