@@ -35,6 +35,9 @@ void setup() {
 
   uint8_t tt[] = {1,2,3,4,5,6,7,8,9,10,11,12};
   uint8_t file_id = write_file(tt, 12);
+  Serial.println("read file size:");
+  Serial.println(get_file_size(file_id));
+
   uint8_t re[12];
   uint8_t lig[15];
   readSequential(0, lig, 15);
@@ -284,9 +287,9 @@ void read_file(int id, uint8_t* data,int size){
 
   size = min(size,read_len); //to make shure we dont read more then posible
   
-  uint8_t len = min(block_size-1, size); //read rest of block or if user requested is smaler read that
+  uint8_t len = min(block_size-2, size); //read rest of block or if user requested is smaler read that
 
-  readSequential(addr+1, data , len);
+  readSequential(addr+2, data , len);
 
   data+=len;
   size-=len;
@@ -320,4 +323,13 @@ void delet_file(int id){
     block =next_block;
   }
 
+}
+
+uint16_t get_file_size(int id){
+  uint16_t addr = id*block_size;
+
+  uint16_t len = (readNumber(addr)<< 8);
+  len |= readNumber(addr+1);
+
+  return len;
 }
