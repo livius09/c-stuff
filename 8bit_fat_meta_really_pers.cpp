@@ -1,4 +1,5 @@
-//disclaimer this shit does only partily work if you unplug it and plug it in again it displays giberish but if you then reboot it it works normaly which means that the arduino has some serius problems pretty big BS
+//disclaimer this shit does only partily work if you unplug it and plug it in again it displays giberish but if you then reboot it it works normaly 
+//which means that the arduino has some serius problems pretty big BS
 #include <Wire.h>
 #include <avr/wdt.h>
 
