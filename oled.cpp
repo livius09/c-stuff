@@ -1,6 +1,54 @@
 #include <Wire.h>
 const uint8_t OLED_ADR = 0x3c;
 
+const uint8_t font5x8_latin_basic[36][6] PROGMEM = {
+  // Digits 0-9
+  {0x00, 0x3E, 0x45, 0x49, 0x44, 0x3E}, // 0
+  {0x00, 0x00, 0x02, 0xFF, 0x42, 0x00}, // 1
+  {0x00, 0x46, 0x49, 0x51, 0x61, 0x42}, // 2
+  {0x00, 0x24, 0x52, 0x49, 0x41, 0x42}, // 3
+  {0x00, 0x10, 0xFE, 0x90, 0x48, 0x30}, // 4
+  {0x00, 0x46, 0x49, 0x49, 0x49, 0x31}, // 5
+  {0x00, 0x3E, 0x49, 0x49, 0x49, 0x06}, // 6
+  {0x00, 0x01, 0x01, 0xF1, 0x09, 0x06}, // 7
+  {0x00, 0x36, 0x49, 0x49, 0x49, 0x36}, // 8
+  {0x00, 0x0E, 0x49, 0x49, 0x49, 0x3E}, // 9
+
+  // Letters A-Z
+  {0x00, 0x3E, 0x48, 0x48, 0x48, 0x3E}, // A
+  {0x00, 0x7F, 0x49, 0x49, 0x49, 0x36}, // B
+  {0x00, 0x3E, 0x41, 0x41, 0x41, 0x22}, // C
+  {0x00, 0x7F, 0x41, 0x41, 0x22, 0x1C}, // D
+  {0x00, 0x7F, 0x49, 0x49, 0x49, 0x41}, // E
+  {0x00, 0x7F, 0x48, 0x48, 0x48, 0x40}, // F
+  {0x00, 0x3E, 0x41, 0x49, 0x49, 0x2F}, // G
+  {0x00, 0x7F, 0x08, 0x08, 0x08, 0x7F}, // H
+  {0x00, 0x00, 0x41, 0x7F, 0x41, 0x00}, // I
+  {0x00, 0x02, 0x04, 0x41, 0x7E, 0x40}, // J
+  {0x00, 0x7F, 0x08, 0x14, 0x22, 0x41}, // K
+  {0x00, 0x7F, 0x01, 0x01, 0x01, 0x01}, // L
+  {0x00, 0x7F, 0x20, 0x18, 0x20, 0x7F}, // M
+  {0x00, 0x7F, 0x10, 0x08, 0x04, 0x7F}, // N
+  {0x00, 0x3E, 0x41, 0x41, 0x41, 0x3E}, // O
+  {0x00, 0x3F, 0x48, 0x48, 0x48, 0x30}, // P
+  {0x00, 0x3E, 0x41, 0x45, 0x42, 0x3D}, // Q
+  {0x00, 0x7F, 0x48, 0x4C, 0x4A, 0x31}, // R
+  {0x00, 0x32, 0x49, 0x49, 0x49, 0x26}, // S
+  {0x00, 0x40, 0x40, 0x7F, 0x40, 0x40}, // T
+  {0x00, 0x7E, 0x01, 0x01, 0x01, 0x7E}, // U
+  {0x00, 0x7C, 0x02, 0x01, 0x02, 0x7C}, // V
+  {0x00, 0x7E, 0x01, 0x1E, 0x01, 0x7E}, // W
+  {0x00, 0x63, 0x14, 0x08, 0x14, 0x63}, // X
+  {0x00, 0x38, 0x44, 0x47, 0x44, 0x38}, // Y
+  {0x00, 0x43, 0x45, 0x49, 0x51, 0x61}  // Z
+};
+
+
+
+
+
+
+
 namespace CMD {
   constexpr uint8_t CMD                 = 0x00; //prefix befor sending a comand
   constexpr uint8_t DAT                 = 0x40; //prefix befor sending data
@@ -21,8 +69,8 @@ namespace CMD {
   constexpr uint8_t SET_PAGE_ADDR       = 0x22; //Followed by start and end page
 
   constexpr uint8_t SET_START_LINE      = 0x40;  // + 0-63 value
-  constexpr uint8_t SET_SEGMENT_REMAP_0 = 0xA0;
-  constexpr uint8_t SET_SEGMENT_REMAP_1 = 0xA1; 
+  constexpr uint8_t SET_SEGMENT_REMAP_ltr = 0xA0; //left to right normal
+  constexpr uint8_t SET_SEGMENT_REMAP_rtl = 0xA1; //right to left 
   constexpr uint8_t Set_Contrast	      = 0x81;   //Range 0x00–0xF
 
   constexpr uint8_t SET_COM_OUT_NORMAL  = 0xC0;
@@ -50,6 +98,10 @@ class Oled_obj{
     bool charge_pump_on = false;
     const uint8_t height = 64;
     const uint8_t width = 128;
+    const uint8_t pages = 8;
+
+    uint8_t framebuffer[8][128];
+
 
     enum cur_mode{
       RAM,
@@ -69,13 +121,17 @@ class Oled_obj{
       set_offset(0x00);
       //0x40,         // Start line = 0
       set_start_line(0);
+      set_colum_adr(0, 127),
+      set_page_adr(0, 7);
 
       //0x8D, 0x14,   // Charge pump ON
       turn_charge_pump_on();
       //0x20, 0x00,   // Memory mode: horizontal
       set_mem_mode_horizontal();
       //0xA1,         // Segment remap
+      set_remap_right_to_left();
       //0xC8,         // COM output scan direction
+      set_com_normal();
       //0xDA, 0x12,   // COM pins
       set_com_pins_config(0x12);
       //0x81, 0xCF,   // Contrast
@@ -87,6 +143,10 @@ class Oled_obj{
       resume_to_ram();
       //0xA6,         // Normal display
       set_not_inverted();
+
+      clear();
+
+      set_start_line(0);
 
       //0xAF          // Display ON
       turn_on();
@@ -122,15 +182,7 @@ class Oled_obj{
       Serial.println(tmp);
     }
 
-    void send_data(uint8_t dat){
-      Wire.beginTransmission(OLED_ADR);
-      Wire.write(CMD::DAT);
-      Wire.write(dat);
-      int tmp = Wire.endTransmission();
-      Serial.println(tmp);
-    }
-
-
+    
     void togle_display(){
       if(on){
         turn_off();
@@ -237,8 +289,33 @@ class Oled_obj{
       send_comand(CMD::SET_COM_PINS_CONFIG,conf);
     }
 
-    
 
+    void set_remap_left_to_right(){
+      send_comand(CMD::SET_SEGMENT_REMAP_ltr);
+    }
+    void set_remap_right_to_left(){
+      send_comand(CMD::SET_SEGMENT_REMAP_rtl);
+    }
+
+    
+    void set_com_normal(){ //top to botom
+      send_comand(CMD::SET_COM_OUT_NORMAL);
+    }
+
+    void set_com_fliped(){  //bottom to top
+      send_comand(CMD::SET_COM_OUT_FLIPPED);
+    }
+
+
+    void set_colum_adr(uint8_t start, uint8_t end){
+      send_comand(CMD::SET_COLUMN_ADDR,start,end);
+    }
+
+    void set_page_adr(uint8_t start, uint8_t end){
+      send_comand(CMD::SET_PAGE_ADDR, start, end);
+    }
+
+    
     void set_start_line(uint8_t line){
       if(line > 63){
         Serial.println("line to big only betwen 0-63");
@@ -247,10 +324,118 @@ class Oled_obj{
       }
     }
 
+    void send_data(uint8_t dat){
+      Wire.beginTransmission(OLED_ADR);
+      Wire.write(CMD::DAT);
+      Wire.write(dat);
+      int tmp = Wire.endTransmission();
+      Serial.println(tmp);
+    }
+
+    void send_data(uint8_t dat[], uint16_t len){
+      while(len>0){
+        uint8_t chunk = min(31,len);
+        Wire.beginTransmission(OLED_ADR);
+        Wire.write(CMD::DAT);
+        Wire.write(dat,chunk);
+        Wire.endTransmission();
+
+        len -= chunk;
+        dat += chunk;
+      }
+    }
+
+    void clear(){
+      for (int i = 0; i < 1024; i++) {
+        send_data(0x00);
+      }
+    }
+
+    void set_pixel(uint8_t x, uint8_t y,bool state){
+      if(x>128 || y>64){
+        Serial.println("pixels out of range");
+      }else{
+        
+        uint8_t bit_pos = y % 8;
+        uint8_t page = y/8;
+        if (state) {
+          framebuffer[page][x] |= (1 << bit_pos);  // Set the bit
+        } else {
+          framebuffer[page][x] &= ~(1 << bit_pos); // Clear the bit
+        }
+
+      }
+    }
+    void draw_line_x(double k, double d, uint8_t start=0, uint8_t end = 128){
+      for (int i = start; i < end; i++) {
+        uint8_t y = round((k*i)+d);
+        if(y>64){
+          break;
+        }
+        set_pixel(i,y,true);
+      }
+    }
+
+    void draw_line_ptp_x(uint8_t p1[],uint8_t p2[]){ //two bytes x y
+      if(p1[0] > 128 || p1[1] > 64){
+        Serial.println("p1 is out of range");
+      }else if(p2[0] > 128 || p2[1] > 64){
+        Serial.println("p2 is out of range");
+      }else{
+        int16_t dx = p2[0]-p1[0];
+        if(dx==0){
+          Serial.println("slope is infinite");
+          return;
+        }
+        double k = (double)(p2[1]-p1[1]) / (double) (dx);
+        double d = p1[1] - (k*p1[0]);
+        draw_line_x(k,d,p1[0],p2[0]);
+      }
+    }
 
 
-    
-    
+    void draw_char(char c, uint8_t x, uint8_t y) {
+      uint8_t index;
+      y = y / 8; // assumes vertical pages of 8 pixels (standard for SSD1306)
+
+      if (c >= '0' && c <= '9') {
+        index = c - '0';
+      } else if (c >= 'A' && c <= 'Z') {
+        index = 10 + (c - 'A');
+      } else {
+        return; // unsupported char
+      }
+
+      for (uint8_t col = 0; col < 6; col++) {
+        uint8_t bits = pgm_read_byte(&font5x8_latin_basic[index][col]);
+
+        if ((x + col) < 128 && y < 8) {
+          framebuffer[y][x + col] = bits;
+        }
+      }
+    }
+
+  void draw_string(char str[],uint8_t x, uint8_t y){
+    int i = 0;
+    while (str[i]!='\0') {
+      draw_char(str[i],i*6 + x,y);
+      i++;
+    }
+  }
+
+  void scroling_string_right(char str[],uint8_t x, uint8_t y, uint8_t to, double pps = 1){
+    while(x<to){
+      draw_string(str, x, y);
+      x+=round(pps/4);
+      update();
+      delay(250);
+    }
+
+  }
+
+  void update(){
+    send_data((uint8_t*)framebuffer,1024);
+  }  
 };
 
 Oled_obj oled;
@@ -259,14 +444,12 @@ void setup() {
   Wire.begin();
   Serial.begin(9600);
   
-  
   oled.init();
-  oled.send_data(0xFF);
+  delay(100);
+  char str[] = {"ABCDEF"};
+  oled.scroling_string_right(str,0,10,70,4);
+  oled.update();
 }
 
 void loop() {
-  oled.toggle_inverted();
-  oled.send_data(0xFF);
-  delay(2000);
 }
-
