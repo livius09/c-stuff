@@ -183,6 +183,7 @@ class Oled_obj{
     }
 
     
+
     void togle_display(){
       if(on){
         turn_off();
@@ -306,6 +307,8 @@ class Oled_obj{
       send_comand(CMD::SET_COM_OUT_FLIPPED);
     }
 
+    //constexpr uint8_t SET_COLUMN_ADDR     = 0x21; //Followed by start and end column
+    //constexpr uint8_t SET_PAGE_ADDR       = 0x22; //Followed by start and end page
 
     void set_colum_adr(uint8_t start, uint8_t end){
       send_comand(CMD::SET_COLUMN_ADDR,start,end);
@@ -323,6 +326,9 @@ class Oled_obj{
         send_comand(CMD::SET_START_LINE, line);
       }
     }
+
+
+
 
     void send_data(uint8_t dat){
       Wire.beginTransmission(OLED_ADR);
@@ -375,8 +381,17 @@ class Oled_obj{
         set_pixel(i,y,true);
       }
     }
+    void draw_line_y(double k, double d, uint8_t start=0, uint8_t end = 64){
+      for (int i = start; i < end; i++) {
+        uint8_t x = round((k*i)+d);
+        if(x>64){
+          break;
+        }
+        set_pixel(x,i,true);
+      }
+    }
 
-    void draw_line_ptp_x(uint8_t p1[],uint8_t p2[]){ //two bytes x y
+    void draw_line_ptp(uint8_t p1[],uint8_t p2[]){ //two bytes x y
       if(p1[0] > 128 || p1[1] > 64){
         Serial.println("p1 is out of range");
       }else if(p2[0] > 128 || p2[1] > 64){
@@ -384,7 +399,7 @@ class Oled_obj{
       }else{
         int16_t dx = p2[0]-p1[0];
         if(dx==0){
-          Serial.println("slope is infinite");
+          draw_line_y(0,p1[0],p1[1],p2[2]);
           return;
         }
         double k = (double)(p2[1]-p1[1]) / (double) (dx);
@@ -415,6 +430,12 @@ class Oled_obj{
       }
     }
 
+  
+
+
+
+
+
   void draw_string(char str[],uint8_t x, uint8_t y){
     int i = 0;
     while (str[i]!='\0') {
@@ -424,18 +445,34 @@ class Oled_obj{
   }
 
   void scroling_string_right(char str[],uint8_t x, uint8_t y, uint8_t to, double pps = 1){
+    uint8_t fpps = round(pps/4);
     while(x<to){
       draw_string(str, x, y);
-      x+=round(pps/4);
+      x+= fpps;
       update();
       delay(250);
     }
 
   }
 
+
+  void draw_square(uint8_t x,uint8_t y,uint8_t a){
+    draw_line_x(0, y, x, x+a);
+    draw_line_x(0, y+a, x, x+a);
+
+    draw_line_y(0, x, y, y+a);
+    draw_line_y(0, x+a, y, y+a);
+
+  }
+
   void update(){
     send_data((uint8_t*)framebuffer,1024);
-  }  
+  }
+
+
+
+    
+    
 };
 
 Oled_obj oled;
@@ -446,10 +483,13 @@ void setup() {
   
   oled.init();
   delay(100);
-  char str[] = {"ABCDEF"};
-  oled.scroling_string_right(str,0,10,70,4);
+  
+  oled.draw_square(30, 30, 20);
+  //char str[] = {"ABCDEF"};
+  //oled.scroling_string_right(str,0,10,70,4);
   oled.update();
 }
 
 void loop() {
 }
+
