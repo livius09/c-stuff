@@ -373,45 +373,64 @@ class Oled_obj{
       }
     }
     void draw_line_x(double k, double d, uint8_t start=0, uint8_t end = 128){
-      for (int i = start; i < end; i++) {
-        uint8_t y = round((k*i)+d);
-        if(y>64){
-          break;
+      if(start < end){
+        for (int i = start; i < end; i++) {
+          uint8_t y = round((k*i)+d);
+          if(!(y>64||y<0)){
+            set_pixel(i,y,true);
+          }
         }
-        set_pixel(i,y,true);
+      }else{
+        for (int i = start; i > end; i--) {
+          uint8_t y = round((k*i)+d);
+          if(!(y>64||y<0)){
+            set_pixel(i,y,true);
+          }
+          
+        }
       }
     }
     void draw_line_y(double k, double d, uint8_t start=0, uint8_t end = 64){
-      for (int i = start; i < end; i++) {
+      if(start < end){
+        for (int i = start; i < end; i++) {
+          uint8_t x = round((k*i)+d);
+          if(x>128 || x<0){
+            break;
+          }
+          set_pixel(x,i,true);
+        }
+      }else{
+        for (int i = start; i > end; i--) {
         uint8_t x = round((k*i)+d);
-        if(x>64){
+        if(x>128 || x<0){
           break;
         }
         set_pixel(x,i,true);
-      }
+        }
+      } 
     }
 
-    void draw_line_ptp(uint8_t p1[],uint8_t p2[]){ //two bytes x y
-      if(p1[0] > 128 || p1[1] > 64){
+    void draw_line_ptp(uint8_t x1 ,uint8_t y1,    uint8_t x2 ,uint8_t y2){ //two bytes x y
+      if(x1 > 128 || y1 > 64){
         Serial.println("p1 is out of range");
-      }else if(p2[0] > 128 || p2[1] > 64){
+      }else if(x2 > 128 || y2 > 64){
         Serial.println("p2 is out of range");
       }else{
-        int16_t dx = p2[0]-p1[0];
+        int16_t dx = x2-x1;
         if(dx==0){
-          draw_line_y(0,p1[0],p1[1],p2[2]);
+          draw_line_y(0,x1,y1,y2);
           return;
         }
-        double k = (double)(p2[1]-p1[1]) / (double) (dx);
-        double d = p1[1] - (k*p1[0]);
-        draw_line_x(k,d,p1[0],p2[0]);
+        double k = (double)(y2-y1) / (double) (dx);
+        double d = y1 - (k*x1);
+        draw_line_x(k,d,x1,x2);
       }
     }
 
 
     void draw_char(char c, uint8_t x, uint8_t y) {
       uint8_t index;
-      y = y / 8; // assumes vertical pages of 8 pixels (standard for SSD1306)
+      y = y / 8;
 
       if (c >= '0' && c <= '9') {
         index = c - '0';
@@ -429,11 +448,6 @@ class Oled_obj{
         }
       }
     }
-
-  
-
-
-
 
 
   void draw_string(char str[],uint8_t x, uint8_t y){
@@ -464,6 +478,11 @@ class Oled_obj{
     draw_line_y(0, x+a, y, y+a);
 
   }
+  void draw_triangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t x3, uint8_t y3){
+    draw_line_ptp(x1, y1, x2, y2);
+    draw_line_ptp(x2,y2,  x3,y3);
+    draw_line_ptp(x3,y3,  x1,y1);
+  }
 
   void update(){
     send_data((uint8_t*)framebuffer,1024);
@@ -484,9 +503,13 @@ void setup() {
   oled.init();
   delay(100);
   
-  oled.draw_square(30, 30, 20);
-  //char str[] = {"ABCDEF"};
-  //oled.scroling_string_right(str,0,10,70,4);
+  oled.draw_line_x(0,25);
+  oled.draw_line_y(0,80,35,0);
+  oled.draw_triangle(10,10, 20,20,  20,10);
+  oled.draw_square(25,10,10);
+  oled.draw_string("LEVI", 40, 10);
+  
+  oled.scroling_string_right("HALLO", 10, 50, 90,4);
   oled.update();
 }
 
