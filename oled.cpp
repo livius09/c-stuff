@@ -71,7 +71,7 @@ namespace CMD {
   constexpr uint8_t SET_START_LINE      = 0x40;  // + 0-63 value
   constexpr uint8_t SET_SEGMENT_REMAP_ltr = 0xA0; //left to right normal
   constexpr uint8_t SET_SEGMENT_REMAP_rtl = 0xA1; //right to left 
-  constexpr uint8_t Set_Contrast	      = 0x81;   //Range 0x00–0xF
+  constexpr uint8_t Set_Contrast        = 0x81;   //Range 0x00–0xF
 
   constexpr uint8_t SET_COM_OUT_NORMAL  = 0xC0;
   constexpr uint8_t SET_COM_OUT_FLIPPED = 0xC8;
@@ -488,6 +488,17 @@ class Oled_obj{
     send_data((uint8_t*)framebuffer,1024);
   }
 
+  void wbuff(uint8_t arr[][], const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h){
+    
+    for (uint8_t i = y; i < y+h; i++){
+      for (uint8_t j = x; j < x+w; j++){
+        
+        if((j > 0 && j<width)&&(i > 0 && i < height){
+           frambuffer[i][j] = arr[i-y][j-x];
+        }
+      }
+    }
+
 
 
     
@@ -515,4 +526,3 @@ void setup() {
 
 void loop() {
 }
-
