@@ -470,14 +470,23 @@ class Oled_obj{
   }
 
 
-  void draw_square(uint8_t x,uint8_t y,uint8_t a){
+  void draw_rectangle(uint8_t x,uint8_t y, uint8_t a, uint8_t b){ //only the outline
     draw_line_x(0, y, x, x+a);
-    draw_line_x(0, y+a, x, x+a);
+    draw_line_x(0, y+bool, x, x+a);
 
-    draw_line_y(0, x, y, y+a);
-    draw_line_y(0, x+a, y, y+a);
+    draw_line_y(0, x, y, y+b);
+    draw_line_y(0, x+a, y, y+b);
 
   }
+  void draw_rectangle_full(uint8_t x, uint8_t y, uint8_t a, uint8_t b){
+    for (uint8_t i = y; i < y+b; i++){
+      for (uint8_t j = x; j < x+a; j++){
+        set_pixel(x,y,true);  
+      }
+    }
+
+  }
+
   void draw_triangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t x3, uint8_t y3){
     draw_line_ptp(x1, y1, x2, y2);
     draw_line_ptp(x2,y2,  x3,y3);
@@ -488,13 +497,18 @@ class Oled_obj{
     send_data((uint8_t*)framebuffer,1024);
   }
 
-  void wbuff(uint8_t arr[][], const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h){
+  void wbuff(uint8_t arr[], const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h){ //starts from botom left toward right high corner
     
-    for (uint8_t i = y; i < y+h; i++){
-      for (uint8_t j = x; j < x+w; j++){
+    for (uint8_t i = 0; i < h; i++){
+      for (uint8_t j = 0; j < w; j++){
+
+        uint8_t pixel_y = y + i;
+        uint8_t pixel_x = x + j;
         
-        if((j > 0 && j<width)&&(i > 0 && i < height){
-           frambuffer[i][j] = arr[i-y][j-x];
+        if (pixel_x < width && pixel_y < height) {
+          uint8_t page = i/8; 	   //in arr
+          uint8_t pos  = i%8;     //which bit
+          set_pixel(pixel_x, pixel_y, ((arr[page * w + j ]) >> pos) & 0x01);
         }
       }
     }
