@@ -513,6 +513,22 @@ class Oled_obj{
       }
     }
 
+  void wbuff_progmem(const uint8_t* arr, const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h){ //starts from botom left toward right high corner
+    
+    for (uint8_t i = 0; i < h; i++){
+      for (uint8_t j = 0; j < w; j++){
+
+        uint8_t pixel_y = y + i;
+        uint8_t pixel_x = x + j;
+        
+        if (pixel_x < width && pixel_y < height) {
+          uint8_t page = i/8; 	   //in arr
+          uint8_t pos  = i%8;     //which bit
+          set_pixel(pixel_x, pixel_y, ((pgm_read_byte(&arr[page * w + j])) >> pos) & 0x01);
+        }
+      }
+    }
+
 
 
     
