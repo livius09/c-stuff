@@ -90,6 +90,18 @@ namespace CMD {
   constexpr uint8_t CHARGE_PUMP_OFF     = 0x10;
 }
 
+const uint8_t smile[] PROGMEM = {
+  0b00111100, // Column 0 (leftmost)
+  0b01000010, // Column 1
+  0b10100101, // Column 2
+  0b10000001, // Column 3
+  0b10100101, // Column 4
+  0b10011001, // Column 5
+  0b01000010, // Column 6
+  0b00111100  // Column 7 (rightmost)
+};
+
+
 class Oled_obj{
   public:
     bool on = false;
@@ -351,9 +363,15 @@ class Oled_obj{
       }
     }
 
-    void clear(){
+    void clear_dis(){
       for (int i = 0; i < 1024; i++) {
         send_data(0x00);
+      }
+    }
+    void clear_framebuf(){
+      for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 128; j++) {
+          framebuffer[i][j] = 0x00;
       }
     }
 
@@ -544,14 +562,9 @@ void setup() {
   oled.init();
   delay(100);
   
-  oled.draw_line_x(0,25);
-  oled.draw_line_y(0,80,35,0);
-  oled.draw_triangle(10,10, 20,20,  20,10);
-  oled.draw_square(25,10,10);
-  oled.draw_string("LEVI", 40, 10);
-  
-  oled.scroling_string_right("HALLO", 10, 50, 90,4);
+  wbuff_progmem(smile, 0, 0, 8, 8);
   oled.update();
+
 }
 
 void loop() {
