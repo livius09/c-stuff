@@ -496,13 +496,16 @@ class Oled_obj{
     draw_line_y(0, x+a, y, y+b);
 
   }
-  void draw_rectangle_full(uint8_t x, uint8_t y, uint8_t a, uint8_t b){
+  void draw_rectangle_full(uint8_t x, uint8_t y, uint8_t a, uint8_t b, const bool state = true){
     for (uint8_t i = y; i < y+b; i++){
       for (uint8_t j = x; j < x+a; j++){
-        set_pixel(x,y,true);  
+        if(x>128 || y>64){
+          Serial.println("pixels out of range");
+        }else{
+          set_pixel(j,i,state);  
+        }
       }
     }
-
   }
 
   void draw_triangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t x3, uint8_t y3){
