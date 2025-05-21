@@ -1,8 +1,19 @@
 #include <avr/sleep.h>
 #include <avr/power.h>
 #include <avr/interrupt.h>
+#include <FastLED.h>
 #include <Wire.h>
-const uint8_t OLED_ADR = 0x3c;
+
+// How many leds are in the strip?
+#define NUM_LEDS 30
+
+// Data pin that led data will be written out over
+#define DATA_PIN 8
+
+// This is an array of leds.  One item for each led in your strip.
+CRGB leds[NUM_LEDS];
+
+
 
 const uint8_t font5x8_latin_basic[36][6] PROGMEM = {
   // Digits 0-9
@@ -93,26 +104,6 @@ namespace CMD {
   constexpr uint8_t CHARGE_PUMP_OFF     = 0x10;
 }
 
-const uint8_t smile[] PROGMEM = {
-  0b00000000, 0b00000000, // Column 0
-  0b00011000, 0b00011000, // Column 1
-  0b00100100, 0b00100100, // Column 2
-  0b01000010, 0b01000010, // Column 3
-  0b10000001, 0b10000001, // Column 4
-  0b10000001, 0b10000001, // Column 5
-  0b10100101, 0b10100101, // Column 6
-  0b01000010, 0b01000010, // Column 7
-  0b01000010, 0b01000010, // Column 8
-  0b10100101, 0b10100101, // Column 9
-  0b10000001, 0b10000001, // Column 10
-  0b10000001, 0b10000001, // Column 11
-  0b01000010, 0b01000010, // Column 12
-  0b00100100, 0b00100100, // Column 13
-  0b00011000, 0b00011000, // Column 14
-  0b00000000, 0b00000000  // Column 15
-};
-
-
 
 class Oled_obj{
   public:
@@ -123,6 +114,7 @@ class Oled_obj{
     const uint8_t height = 64;
     const uint8_t width = 128;
     const uint8_t pages = 8;
+    const uint8_t OLED_ADR = 0x3c;
 
     uint8_t framebuffer[8][128];
 
@@ -226,19 +218,8 @@ class Oled_obj{
       on = false;
     }
 
-    
-    void toggle_inverted(){
-      if(inverted){
-        set_not_inverted();
-      }else{
-        send_comand(CMD::INVERT_DISPLAY);
-      }
-      inverted = !inverted; 
-    }
     void set_inverted(){
-      if(!inverted){
-        toggle_inverted();
-      }
+      send_comand(CMD::INVERT_DISPLAY);
     }
     void set_not_inverted(){
       send_comand(CMD::NORMAL_DISPLAY);
@@ -278,14 +259,6 @@ class Oled_obj{
     void turn_charge_pump_off(){
       charge_pump_on = false;
       send_comand(CMD::CHARGE_PUMP_CONTROL,CMD::CHARGE_PUMP_OFF);
-    }
-    void toogle_charge_pump(){
-      if(charge_pump_on){
-        turn_charge_pump_off();
-      }else{
-        turn_charge_pump_on();
-      }
-      charge_pump_on = !charge_pump_on;
     }
 
 
@@ -458,49 +431,6 @@ class Oled_obj{
       }
     }
 
-
-    void draw_char(char c, uint8_t x, uint8_t y) {
-      uint8_t index;
-      y = y / 8;
-
-      if (c >= '0' && c <= '9') {
-        index = c - '0';
-      } else if (c >= 'A' && c <= 'Z') {
-        index = 10 + (c - 'A');
-      } else {
-        return; // unsupported char
-      }
-
-      for (uint8_t col = 0; col < 6; col++) {
-        uint8_t bits = pgm_read_byte(&font5x8_latin_basic[index][col]);
-
-        if ((x + col) < 128 && y < 8) {
-          framebuffer[y][x + col] = bits;
-        }
-      }
-    }
-
-
-  void draw_string(char str[],uint8_t x, uint8_t y){
-    int i = 0;
-    while (str[i]!='\0') {
-      draw_char(str[i],i*6 + x,y);
-      i++;
-    }
-  }
-
-  void scroling_string_right(char str[],uint8_t x, uint8_t y, uint8_t to, double pps = 1){
-    uint8_t fpps = round(pps/4);
-    while(x<to){
-      draw_string(str, x, y);
-      x+= fpps;
-      update();
-      delay(250);
-    }
-
-  }
-
-
   void draw_rectangle(uint8_t x,uint8_t y, uint8_t a, uint8_t b){ //only the outline
     draw_line_x(0, y, x, x+a);
     draw_line_x(0, y+b, x, x+a);
@@ -531,23 +461,6 @@ class Oled_obj{
     send_data((uint8_t*)framebuffer,1024);
   }
 
-  void wbuff(uint8_t arr[], const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h){ //starts from botom left toward right high corner
-    
-    for (uint8_t i = 0; i < h; i++){
-      for (uint8_t j = 0; j < w; j++){
-
-        uint8_t pixel_y = y + i;
-        uint8_t pixel_x = x + j;
-        
-        if (pixel_x < width && pixel_y < height) {
-          uint8_t page = i/8;      //in arr
-          uint8_t pos  = i%8;     //which bit
-          set_pixel(pixel_x, pixel_y, ((arr[page * w + j ]) >> pos) & 0x01);
-        }
-      }
-    }
-  }
-
   void wbuff_progmem(const uint8_t* arr, const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h){ //starts from botom left toward right high corner
     
     for (uint8_t i = 0; i < h; i++){
@@ -564,10 +477,6 @@ class Oled_obj{
       }
     }
   }
-
-
-
-    
     
 };
 
@@ -587,6 +496,8 @@ void goToSleep() {
   sei();  // Enable global interrupts
   sleep_cpu();  // Enter sleep
 
+  //interupt hapens here
+  
   sleep_disable();
   detachInterrupt(digitalPinToInterrupt(2));
 }
@@ -596,6 +507,8 @@ void setup() {
   Serial.begin(9600);
 
   pinMode(2, INPUT);
+  FastLED.addLeds<WS2811, DATA_PIN, RGB>(leds, NUM_LEDS);
+  
 
   power_adc_disable();
   power_spi_disable();
@@ -616,7 +529,6 @@ void setup() {
 
   Serial.println("Going to sleep...");
   delay(100);
-
   goToSleep();  // First sleep
 }
 
@@ -631,6 +543,39 @@ void loop() {
   oled.draw_rectangle_full(40,32,13,28);
   oled.draw_rectangle_full(72,32,13,28);
   oled.update();
+
+  
+  for(int i=0;i<10;i++){
+    // Turn our current led on to white, then show the leds
+      leds[i] = CRGB::Green;
+      
+  }
+
+  FastLED.show();
+
+  delay(1000);
+  
+  for(int a=10;a<20;a++){
+    // Turn our current led on to white, then show the leds
+      leds[a] = CRGB::Green;
+      
+      
+      leds[a-10] = CRGB::Black;
+  }
+  FastLED.show();
+
+  delay(1000);
+  
+  for(int e=20;e<30;e++){
+    // Turn our current led on to white, then show the leds
+      leds[e] = CRGB::Green;
+      
+      
+      leds[e-10] = CRGB::Black;
+  }
+  FastLED.show();
+  delay(1000);
+  FastLED.clear ();
   
   
   delay(100);
