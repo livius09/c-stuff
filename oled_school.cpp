@@ -12,7 +12,7 @@
 // This is an array of leds.  One item for each led in your strip.
 CRGB redLeds[NUM_LEDS];
 CRGB greenLeds[NUM_LEDS];
-CRGB blueLeds[NUM_LEDS];
+CRGB pinkLeds[NUM_LEDS];
 
 
 
@@ -511,9 +511,9 @@ void setup() {
   pinMode(8, OUTPUT);
 
   
-  FastLED.addLeds<WS2811, 8, RGB>(redLeds, NUM_LEDS);
-  FastLED.addLeds<WS2811, 9, RGB>(greenLeds, NUM_LEDS);
-  FastLED.addLeds<WS2811, 10, RGB>(blueLeds, NUM_LEDS);
+  FastLED.addLeds<WS2811, 8, GRB>(redLeds, NUM_LEDS);
+  FastLED.addLeds<WS2811, 9, GRB>(greenLeds, NUM_LEDS);
+  FastLED.addLeds<WS2811, 10, GRB>(pinkLeds, NUM_LEDS);
   
 
   power_adc_disable();
@@ -568,7 +568,7 @@ void loop() {
 
   FastLED.show();
 
-  delay(1000);
+  delay(3000);
   
   for(int a=0;a<10;a++){
     // Turn our current led on to white, then show the leds
@@ -579,17 +579,18 @@ void loop() {
   }
   FastLED.show();
 
-  delay(1000);
+  delay(3000);
   
   for(int e=0;e<10;e++){
     // Turn our current led on to white, then show the led-s
-      blueLeds[e] = CRGB::Blue;
+      pinkLeds[e] = CRGB(128, 0, 128);
       
       
       greenLeds[e] = CRGB::Black;
   }
   FastLED.show();
-  delay(1000);
+  delay(3
+  000);
   FastLED.clear ();
   FastLED.show();
   
