@@ -519,7 +519,7 @@ void loop() {
   oled.update();
 
   
-  for(int i=0;i<10;i++){
+  for(int i=0;i<NUM_LEDS;i++){
     // Turn our current led on to white, then show the leds
       redLeds[i] = CRGB::Green;
       
@@ -529,9 +529,9 @@ void loop() {
 
   delay(3000);
   
-  for(int a=0;a<10;a++){
+  for(int a=0;a<NUM_LEDS;a++){
     // Turn our current led on to white, then show the leds
-      greenLeds[a] = CRGB::Red;
+      greenLeds[a] = CRGB(150, 0, 0);
       
       
       redLeds[a] = CRGB::Black;
@@ -540,7 +540,7 @@ void loop() {
 
   delay(3000);
   
-  for(int e=0;e<10;e++){
+  for(int e=0;e<NUM_LEDS;e++){
     // Turn our current led on to white, then show the led-s
       pinkLeds[e] = CRGB(128, 0, 128);
       
