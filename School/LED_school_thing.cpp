@@ -3,112 +3,97 @@
  * 1CHIT
  * 18.6.2025
  * 
- * durch interupt von bewegungs sensor geweck
- * erleuchtet die LED streifen in 3 sekündigen abständen
- * geht dann wieder in eine ruhe modus um energie zu sparen
+ * Durch Interrupt vom Bewegungssensor geweckt
+ * Leuchtet LED-Streifen in 3-sekündigen Abständen
+ * Geht danach wieder in einen Ruhemodus um Energie zu sparen
  */
 
-#include <avr/sleep.h>
 #include <avr/power.h>
 #include <avr/interrupt.h>
 #include <FastLED.h>
 
-
-// How many leds are in the strip?
+// Number of LEDs per strip
 #define NUM_LEDS 9
 
-
-// This is an array of leds.  One item for each led in your strip.
+// LED arrays
 CRGB redLeds[NUM_LEDS];
 CRGB greenLeds[NUM_LEDS];
 CRGB pinkLeds[NUM_LEDS];
 
+volatile bool state = false; // Triggered by interrupt
 
+// --- INTERRUPT HANDLER ---
 void wakeUp() {
-  // Just wake from sleep — keep ISR short and avoid Serial here
+  state = true;
 }
 
-void goToSleep() {
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-  sleep_enable();
-  EIFR = bit (INTF0);  // Clear external interrupt flag
-
-  attachInterrupt(digitalPinToInterrupt(2), wakeUp, RISING);
-
-  sei();  // Enable global interrupts
-  sleep_cpu();  // Enter sleep
-
-  //interupt hapens here
-  
-  sleep_disable();
-  detachInterrupt(digitalPinToInterrupt(2));
-}
-
+// --- SETUP ---
 void setup() {
+  
   Serial.begin(9600);
 
-  pinMode(2, INPUT);
+  pinMode(2, INPUT);   // Motion sensor input
+  pinMode(3, OUTPUT);  // LED indicator or relay
+  pinMode(4, OUTPUT);  // LED indicator
+  pinMode(5, OUTPUT);  // Buzzer
 
   pinMode(8, OUTPUT);
   pinMode(9, OUTPUT);
   pinMode(10, OUTPUT);
 
-  
   FastLED.addLeds<WS2811, 8, GRB>(redLeds, NUM_LEDS);
   FastLED.addLeds<WS2811, 9, GRB>(greenLeds, NUM_LEDS);
   FastLED.addLeds<WS2811, 10, GRB>(pinkLeds, NUM_LEDS);
-  
 
-  power_adc_disable();
-  power_spi_disable();
-  power_timer1_disable();
-  power_timer2_disable();
-  // Leave Timer0 enabled if you use delay()
-
-
-  Serial.println("Going to sleep...");
-  delay(100);
-  goToSleep();  // First sleep
+  attachInterrupt(digitalPinToInterrupt(2), wakeUp, RISING);
 }
 
+// --- MAIN LOOP ---
 void loop() {
-  Serial.println("Woke up!");
-  delay(100);
-
-  
-  for(int i=0;i<NUM_LEDS;i++){
-    redLeds[i] = CRGB::Green;
-      
+  if (state) {
+    state = false;
+    do_ordeal();
   }
 
-  FastLED.show();
+  
+  delay(50);  // short, low-cost idle delay
+}
 
-  delay(3000);
-  
-  for(int a=0;a<NUM_LEDS;a++){
-    
-    greenLeds[a] = CRGB(150, 0, 0);
-    
-    
-    redLeds[a] = CRGB::Black;
-  }
-  FastLED.show();
+// --- LIGHT SHOW + SOUND ROUTINE ---
+void do_ordeal() {
+  // Re-enable necessary modules
+  power_timer1_enable();
 
-  delay(3000);
-  
-  for(int e=0;e<NUM_LEDS;e++){
-    pinkLeds[e] = CRGB(128, 0, 128);
-    
-    
-    greenLeds[e] = CRGB::Black;
-  }
+  // simple visual + sound sequence
+  digitalWrite(4, HIGH);
+  delay(500);
+  digitalWrite(4, LOW);
+
+  tone(5, 3000, 1000); // 3000 Hz tone for 1 second
+
+  digitalWrite(3, HIGH);
+  delay(500);
+  digitalWrite(3, LOW);
+
+  // Red strip on
+  fill_solid(redLeds, NUM_LEDS, CRGB::Green);
   FastLED.show();
   delay(3000);
-  FastLED.clear ();
+
+  // Switch to green strip
+  fill_solid(greenLeds, NUM_LEDS, CRGB(150, 0, 0));
+  fill_solid(redLeds, NUM_LEDS, CRGB::Black);
   FastLED.show();
-  
-  
-  delay(100);
-  Serial.println("back to sleep!");
-  goToSleep();  // Sleep again
+  delay(3000);
+
+  // Switch to pink strip
+  fill_solid(pinkLeds, NUM_LEDS, CRGB(128, 0, 128));
+  fill_solid(greenLeds, NUM_LEDS, CRGB::Black);
+  FastLED.show();
+  delay(3000);
+
+  // Turn off everything
+  FastLED.clear();
+  FastLED.show();
+ 
 }
