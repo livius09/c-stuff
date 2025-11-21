@@ -61,8 +61,6 @@ void loop() {
 
 // --- LIGHT SHOW + SOUND ROUTINE ---
 void do_ordeal() {
-  // Re-enable necessary modules
-  power_timer1_enable();
 
   // simple visual + sound sequence
   digitalWrite(4, HIGH);
