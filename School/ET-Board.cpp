@@ -25,7 +25,6 @@ void setup()
   Serial.begin(9600);
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   
-
   pinMode(LED_RED, OUTPUT);
   pinMode(LED_GREEN, OUTPUT);
   pinMode(LED_BLUE, OUTPUT);
@@ -36,6 +35,8 @@ void setup()
 
   pinMode(8, INPUT_PULLUP);
 
+  display.clearDisplay();
+
   play_winner();
 }
 
@@ -44,8 +45,6 @@ void loop()
   if (digitalRead(8) == LOW)  // DEMO_PIN
   {
     Serial.println("begining demo");
-    self_play_demo();
-    self_play_demo();
     self_play_demo();
     self_play_demo();
     display.clearDisplay();
