@@ -41,9 +41,10 @@ void setup() {
 
   randomSeed(analogRead(0));
 
-  pinMode(13,INPUT);
+  pinMode(3,INPUT); //was 13
 
-  attachInterrupt(digitalPinToInterrupt(13), reciveControl , FALLING);
+  attachInterrupt(digitalPinToInterrupt(3), reciveControl , FALLING);
+  //WONT WORK ONLY PIN 2 & 3 are able to atach interups on uno
 }
 
 void loop() {
